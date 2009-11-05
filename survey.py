@@ -92,7 +92,7 @@ def generate_spreadsheet(topics):
 			width += int(width*.5*bool(col_n)) # expand every column but the first
 			sheet.col(col_n).width = width
 			
-	wb.save('audit (generated).xls')
+	wb.save('IT Audit Survey.xls')
 	return wb, sheet
 
 def parse_questions():
