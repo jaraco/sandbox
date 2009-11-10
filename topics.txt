@@ -1,3 +1,14 @@
+Customer Service
+	Who is responsible for customer service?
+	Do you have a formal help desk?
+	How are help-desk calls handled?
+	Who answers the calls, and what training do they receive?
+	Is there a ticket system?
+	Who responds to the requests?
+	Who confirms fulfillment of the request?
+	How are recurring or systemic problems distilled from the general pool of help desk requests?
+	What level of service is expected to be provided for end user support? In other words, what is the typical turnaround for an administrative request (e.g. new e-mail alias, additional storage quota, application installation)?
+	Are there any other unique or interesting aspects to Customer Service that were not captured in the previous questions?
 End User Infrastructure
 	Which desktop Operating Systems are supported?
 	Which additional unsupported desktop Operating Systems are allowed (or disallowed) if any?
@@ -7,9 +18,7 @@ End User Infrastructure
 	In what capacity are handheld devices (PDAs, Blackberrys, iPhone) supported?
 	Is a blackberry server used?
 	Are personally-owned PCs or handheld devices allowed on premesis, allowed to use the infrastructure, or permitted for use in any official capacity?
-	How are help-desk calls handled? Is there a ticket system? Who answers the calls? Who responds to the requests? Who confirms fulfillment of the request?
 	How is desktop hardware maintained? Is there a site-wide hardware maintenance plan, or handled at a departmental level?
-	What level of service is expected to be provided for end user support? In other words, what is the typical turnaround for an administrative request?
 	Are there any other unique or interesting aspects to End User Infrastructure that were not captured in the previous questions?
 Server Infrastructure
 	What server OS are employed? What is the IT department's preferred platform (primary expertise), if any?
@@ -72,6 +81,7 @@ Enterprise Application Services
 	What systems are employed for payroll, timekeeping, asset tracking and property management, logistics, and enterprise financials?
 	What other databases exist at the facility (relational databases, object databases, custom data structures other than file systems)?
 	What e-commerce mechanisms are utilized? Is this capability standardized or implemented at the departmental level?
+	Does e-commerce customer data flow through the 4-H network or is it stored on 4-H servers? In other words, how is sensitive customer data (credit cards, personal identity info) integrated into the 4-H application services?
 	What applications does IT supply to support fundraising efforts?
 	Is a commercial Customer Resource Management (CRM) in use? Are there other CRM techniques employed?
 	How does IT support networking and collaboration with external partners and clients?
