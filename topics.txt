@@ -43,17 +43,6 @@ Connectivity
 	To what extent is IT involved in telephony support? Is VoIP depolyed in any official capacity?
 	What steps have been taken toward the IPv6 transition?
 
-Centralized Management
-	How are software applications requested, licensed, and deployed?
-	What tools are used for centralized management (directory services, group policies, automatic updates)?
-	Do you have any desktop virtualization infrastructure (VDI) plans? If so, what is the status of the effort?
-	How are centralized management practices enforced for offsite or offline clients?
-	How is local storage (local hard disk, flash disk, etc) managed?
-	Is a formal disaster recovery plan in place? How is it updated? Are plans in place for in place for loss of critical resources (data, hardware, administrators)?
-	Are backups of critical data periodically validated for proper coverage?
-	Can you identify any single-point-of-failure not already covered?
-	Are there any other unique or interesting aspects to Centralized Management that were not captured in the previous questions?
-
 Policies and Procedures
 	How are policies relating to Information Services established and enforced?
 	Are policies written and maintained centrally?
@@ -65,6 +54,17 @@ Policies and Procedures
 	How is configuration management maintained? How are deviations from a baseline configuration documented?
 	Are automated logging and auditing tools employed to enforce policies? If so, which tools and how are they employed?
 	Are there areas where policies and procedures are inadequate or where an inordinate amount of manual intervention is required to maintain the policies?
+
+Centralized Management
+	How are software applications requested, licensed, and deployed?
+	What tools are used for centralized management (directory services, group policies, automatic updates)?
+	Do you have any desktop virtualization infrastructure (VDI) plans? If so, what is the status of the effort?
+	How are centralized management practices enforced for offsite or offline clients?
+	How is local storage (local hard disk, flash disk, etc) managed?
+	Is a formal disaster recovery plan in place? How is it updated? Are plans in place for in place for loss of critical resources (data, hardware, administrators)?
+	Are backups of critical data periodically validated for proper coverage?
+	Can you identify any single-point-of-failure not already covered?
+	Are there any other unique or interesting aspects to Centralized Management that were not captured in the previous questions?
 
 Information Security
 	How are security updates applied to desktop and server systems?
