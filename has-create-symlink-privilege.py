@@ -91,6 +91,9 @@ class TOKEN_PRIVILEGES(ctypes.Structure):
 		privileges = ctypes.cast(self.privileges, ctypes.POINTER(array_type)).contents
 		return privileges
 
+	def __iter__(self):
+		return iter(self.get_array())
+
 GetTokenInformation = ctypes.windll.advapi32.GetTokenInformation
 GetTokenInformation.argtypes = [
 	wintypes.HANDLE, # TokenHandle
@@ -101,8 +104,9 @@ GetTokenInformation.argtypes = [
 	]
 GetTokenInformation.restype = wintypes.BOOL
 
-return_length = wintypes.DWORD()
+# first call with zero length to determine what size buffer we need
 
+return_length = wintypes.DWORD()
 params = [
 	token,
 	TOKEN_INFORMATION_CLASS.TokenPrivileges,
@@ -112,7 +116,8 @@ params = [
 	]
 
 res = GetTokenInformation(*params)
-#assert res > 0, "Error in first GetTokenInformation (%d)" % res
+
+# assume we now have the necessary length in return_length
 
 buffer = ctypes.create_string_buffer(return_length.value)
 params[2] = buffer
@@ -124,4 +129,4 @@ assert res > 0, "Error in second GetTokenInformation (%d)" % res
 privileges = ctypes.cast(buffer, ctypes.POINTER(TOKEN_PRIVILEGES)).contents
 print("found {0} privileges".format(privileges.count))
 
-map(print, privileges.get_array())
+map(print, privileges)
