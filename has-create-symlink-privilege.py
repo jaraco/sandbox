@@ -31,14 +31,6 @@ LookupPrivilegeValue.argtypes = (
 	)
 LookupPrivilegeValue.restype = wintypes.BOOL
 
-token = wintypes.HANDLE()
-TOKEN_ALL_ACCESS = 0xf01ff
-res = OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, token)
-if not res > 0: raise RuntimeError("Couldn't get process token")
-symlink_luid = LUID()
-res = LookupPrivilegeValue(None, u"SeCreateSymbolicLinkPrivilege", symlink_luid)
-if not res > 0: raise RuntimeError("Couldn't lookup privilege value")
-
 class TOKEN_INFORMATION_CLASS:
 	TokenUser = 1
 	TokenGroups = 2
@@ -104,29 +96,45 @@ GetTokenInformation.argtypes = [
 	]
 GetTokenInformation.restype = wintypes.BOOL
 
-# first call with zero length to determine what size buffer we need
+def get_process_token():
+	token = wintypes.HANDLE()
+	TOKEN_ALL_ACCESS = 0xf01ff
+	res = OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, token)
+	if not res > 0: raise RuntimeError("Couldn't get process token")
+	return token
 
-return_length = wintypes.DWORD()
-params = [
-	token,
-	TOKEN_INFORMATION_CLASS.TokenPrivileges,
-	None,
-	0,
-	return_length,
-	]
+def get_symlink_luid():
+	symlink_luid = LUID()
+	res = LookupPrivilegeValue(None, u"SeCreateSymbolicLinkPrivilege", symlink_luid)
+	if not res > 0: raise RuntimeError("Couldn't lookup privilege value")
+	return symlink_luid
 
-res = GetTokenInformation(*params)
+def get_privilege_information():
+	# first call with zero length to determine what size buffer we need
 
-# assume we now have the necessary length in return_length
+	return_length = wintypes.DWORD()
+	params = [
+		get_process_token(),
+		TOKEN_INFORMATION_CLASS.TokenPrivileges,
+		None,
+		0,
+		return_length,
+		]
 
-buffer = ctypes.create_string_buffer(return_length.value)
-params[2] = buffer
-params[3] = return_length.value
+	res = GetTokenInformation(*params)
 
-res = GetTokenInformation(*params)
-assert res > 0, "Error in second GetTokenInformation (%d)" % res
+	# assume we now have the necessary length in return_length
 
-privileges = ctypes.cast(buffer, ctypes.POINTER(TOKEN_PRIVILEGES)).contents
+	buffer = ctypes.create_string_buffer(return_length.value)
+	params[2] = buffer
+	params[3] = return_length.value
+
+	res = GetTokenInformation(*params)
+	assert res > 0, "Error in second GetTokenInformation (%d)" % res
+
+	privileges = ctypes.cast(buffer, ctypes.POINTER(TOKEN_PRIVILEGES)).contents
+	return privileges
+
+privileges = get_privilege_information()
 print("found {0} privileges".format(privileges.count))
-
 map(print, privileges)
