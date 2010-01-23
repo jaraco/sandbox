@@ -37,10 +37,10 @@ class TOKEN_INFORMATION_CLASS:
 	TokenPrivileges = 3
 	# ... see http://msdn.microsoft.com/en-us/library/aa379626%28VS.85%29.aspx
 
-SE_PRIVILEGE_ENABLED_BY_DEFAULT = (0x00000001L)
-SE_PRIVILEGE_ENABLED            = (0x00000002L)
-SE_PRIVILEGE_REMOVED            = (0x00000004L)
-SE_PRIVILEGE_USED_FOR_ACCESS    = (0x80000000L)
+SE_PRIVILEGE_ENABLED_BY_DEFAULT = (0x00000001)
+SE_PRIVILEGE_ENABLED            = (0x00000002)
+SE_PRIVILEGE_REMOVED            = (0x00000004)
+SE_PRIVILEGE_USED_FOR_ACCESS    = (0x80000000)
 
 class LUID_AND_ATTRIBUTES(ctypes.Structure):
 	_fields_ = [
@@ -50,6 +50,9 @@ class LUID_AND_ATTRIBUTES(ctypes.Structure):
 
 	def is_enabled(self):
 		return bool(self.attributes & SE_PRIVILEGE_ENABLED)
+
+	def enable(self):
+		self.attributes |= SE_PRIVILEGE_ENABLED
 
 	def get_name(self):
 		size = wintypes.DWORD(10240)
@@ -86,6 +89,8 @@ class TOKEN_PRIVILEGES(ctypes.Structure):
 	def __iter__(self):
 		return iter(self.get_array())
 
+PTOKEN_PRIVILEGES = ctypes.POINTER(TOKEN_PRIVILEGES)
+
 GetTokenInformation = ctypes.windll.advapi32.GetTokenInformation
 GetTokenInformation.argtypes = [
 	wintypes.HANDLE, # TokenHandle
@@ -96,6 +101,18 @@ GetTokenInformation.argtypes = [
 	]
 GetTokenInformation.restype = wintypes.BOOL
 
+# http://msdn.microsoft.com/en-us/library/aa375202%28VS.85%29.aspx
+AdjustTokenPrivileges = ctypes.windll.advapi32.AdjustTokenPrivileges
+AdjustTokenPrivileges.restype = wintypes.BOOL
+AdjustTokenPrivileges.argtypes = [
+	wintypes.HANDLE,                # TokenHandle
+	wintypes.BOOL,                  # DisableAllPrivileges
+	PTOKEN_PRIVILEGES,              # NewState (optional)
+	wintypes.DWORD,                 # BufferLength of PreviousState
+	PTOKEN_PRIVILEGES,              # PreviousState (out, optional)
+	ctypes.POINTER(wintypes.DWORD), # ReturnLength
+	]
+
 def get_process_token():
 	token = wintypes.HANDLE()
 	TOKEN_ALL_ACCESS = 0xf01ff
@@ -105,7 +122,7 @@ def get_process_token():
 
 def get_symlink_luid():
 	symlink_luid = LUID()
-	res = LookupPrivilegeValue(None, u"SeCreateSymbolicLinkPrivilege", symlink_luid)
+	res = LookupPrivilegeValue(None, "SeCreateSymbolicLinkPrivilege", symlink_luid)
 	if not res > 0: raise RuntimeError("Couldn't lookup privilege value")
 	return symlink_luid
 
@@ -135,6 +152,36 @@ def get_privilege_information():
 	privileges = ctypes.cast(buffer, ctypes.POINTER(TOKEN_PRIVILEGES)).contents
 	return privileges
 
-privileges = get_privilege_information()
-print("found {0} privileges".format(privileges.count))
-map(print, privileges)
+def report_privilege_information():
+	privileges = get_privilege_information()
+	print("found {0} privileges".format(privileges.count))
+	tuple(map(print, privileges))
+
+def enable_symlink_privilege():
+	# create a space in memory for a TOKEN_PRIVILEGES structure
+	#  with one element
+	size = ctypes.sizeof(TOKEN_PRIVILEGES)
+	size += ctypes.sizeof(LUID_AND_ATTRIBUTES)
+	buffer = ctypes.create_string_buffer(size)
+	tp = ctypes.cast(buffer, ctypes.POINTER(TOKEN_PRIVILEGES)).contents
+	tp.count = 1
+	tp.get_array()[0].enable()
+	tp.get_array()[0].LUID = get_symlink_luid()
+	token = get_process_token()
+	res = AdjustTokenPrivileges(token, False, tp, 0, None, None)
+	if res == 0:
+		print("Error in AdjustTokenPrivileges")
+		return
+	
+	ERROR_NOT_ALL_ASSIGNED = 1300
+	if ctypes.windll.kernel32.GetLastError == ERROR_NOT_ALL_ASSIGNED:
+		print("Could not assign all privileges")
+
+print("before")
+report_privilege_information()
+
+enable_symlink_privilege()
+print()
+
+print("after")
+report_privilege_information()
