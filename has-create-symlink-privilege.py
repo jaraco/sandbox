@@ -174,7 +174,7 @@ def enable_symlink_privilege():
 		return
 	
 	ERROR_NOT_ALL_ASSIGNED = 1300
-	if ctypes.windll.kernel32.GetLastError == ERROR_NOT_ALL_ASSIGNED:
+	if ctypes.windll.kernel32.GetLastError() == ERROR_NOT_ALL_ASSIGNED:
 		print("Could not assign all privileges")
 
 print("before")
