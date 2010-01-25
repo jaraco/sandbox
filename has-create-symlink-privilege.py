@@ -158,6 +158,10 @@ def report_privilege_information():
 	tuple(map(print, privileges))
 
 def enable_symlink_privilege():
+	"""
+	Try to assign the symlink privilege to the current process token.
+	Return True if the assignment is successful.
+	"""
 	# create a space in memory for a TOKEN_PRIVILEGES structure
 	#  with one element
 	size = ctypes.sizeof(TOKEN_PRIVILEGES)
@@ -171,17 +175,16 @@ def enable_symlink_privilege():
 	res = AdjustTokenPrivileges(token, False, tp, 0, None, None)
 	if res == 0:
 		print("Error in AdjustTokenPrivileges")
-		return
+		return False
 	
 	ERROR_NOT_ALL_ASSIGNED = 1300
 	if ctypes.windll.kernel32.GetLastError() == ERROR_NOT_ALL_ASSIGNED:
 		print("Could not assign all privileges")
+		return False
 
-print("before")
-report_privilege_information()
+	return True
 
-enable_symlink_privilege()
-print()
+assigned = enable_symlink_privilege()
+msg = ['failure', 'success'][assigned]
 
-print("after")
-report_privilege_information()
+print("Symlink privilege assignment completed with {0}".format(msg))
