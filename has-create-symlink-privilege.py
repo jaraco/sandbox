@@ -174,15 +174,10 @@ def enable_symlink_privilege():
 	token = get_process_token()
 	res = AdjustTokenPrivileges(token, False, tp, 0, None, None)
 	if res == 0:
-		print("Error in AdjustTokenPrivileges")
-		return False
-	
-	ERROR_NOT_ALL_ASSIGNED = 1300
-	if ctypes.windll.kernel32.GetLastError() == ERROR_NOT_ALL_ASSIGNED:
-		print("Could not assign all privileges")
-		return False
+		raise RuntimeError("Error in AdjustTokenPrivileges")
 
-	return True
+	ERROR_NOT_ALL_ASSIGNED = 1300
+	return ctypes.windll.kernel32.GetLastError() != ERROR_NOT_ALL_ASSIGNED
 
 assigned = enable_symlink_privilege()
 msg = ['failure', 'success'][assigned]
