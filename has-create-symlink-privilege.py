@@ -114,6 +114,9 @@ AdjustTokenPrivileges.argtypes = [
 	]
 
 def get_process_token():
+	"""
+	Get the current process token
+	"""
 	token = wintypes.HANDLE()
 	TOKEN_ALL_ACCESS = 0xf01ff
 	res = OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, token)
@@ -121,12 +124,18 @@ def get_process_token():
 	return token
 
 def get_symlink_luid():
+	"""
+	Get the LUID for the SeCreateSymbolicLinkPrivilege
+	"""
 	symlink_luid = LUID()
 	res = LookupPrivilegeValue(None, "SeCreateSymbolicLinkPrivilege", symlink_luid)
 	if not res > 0: raise RuntimeError("Couldn't lookup privilege value")
 	return symlink_luid
 
 def get_privilege_information():
+	"""
+	Get all privileges associated with the current process.
+	"""
 	# first call with zero length to determine what size buffer we need
 
 	return_length = wintypes.DWORD()
@@ -153,6 +162,9 @@ def get_privilege_information():
 	return privileges
 
 def report_privilege_information():
+	"""
+	Report all privilege information assigned to the current process.
+	"""
 	privileges = get_privilege_information()
 	print("found {0} privileges".format(privileges.count))
 	tuple(map(print, privileges))
@@ -179,7 +191,10 @@ def enable_symlink_privilege():
 	ERROR_NOT_ALL_ASSIGNED = 1300
 	return ctypes.windll.kernel32.GetLastError() != ERROR_NOT_ALL_ASSIGNED
 
-assigned = enable_symlink_privilege()
-msg = ['failure', 'success'][assigned]
+def main():
+	assigned = enable_symlink_privilege()
+	msg = ['failure', 'success'][assigned]
 
-print("Symlink privilege assignment completed with {0}".format(msg))
+	print("Symlink privilege assignment completed with {0}".format(msg))
+
+if __name__ == '__main__': main()
