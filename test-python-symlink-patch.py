@@ -3,7 +3,7 @@ import os
 import sys
 import subprocess
 import itertools
-
+from optparse import OptionParser
 
 def create_test_dir():
 	"""
@@ -84,12 +84,44 @@ def get_environment_from_batch_command(env_cmd, initial=None):
 	proc.communicate()
 	return result
 
-def get_vcvars_env():
+def get_vcvars_env(*params):
 	vcvarsall = r'c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcvarsall.bat'
 	# even vcvarsall needs some environment to function properly
 	initial = dict(VS90COMNTOOLS=os.environ['VS90COMNTOOLS'])
-	return get_environment_from_batch_command(vcvarsall, initial)
+	initial=None
+	return get_environment_from_batch_command([vcvarsall]+list(params), initial)
 
-env = get_vcvars_env()
+env32 = get_vcvars_env()
+env64 = get_vcvars_env('x64')
+
+def construct_build_command(args=[]):
+	"""
+	Inspired by build.bat
+	"""
+	parser = OptionParser()
+	parser.add_option('-c', '--conf', default='Release')
+	parser.add_option('-p', '--platf', default='Win32')
+	parser.add_option('-r', '--rebuild', action='store_true', default=False)
+	parser.add_option('-d', '--debug', dest='conf', action='store_const', const='Debug')
+	options, args = parser.parse_args(args)
+
+	cmd = [
+		'cmd', '/c',
+		'vcbuild',
+		'/useenv',
+		'pcbuild.sln',
+		'|'.join([options.conf, options.platf])
+	]
+	if options.rebuild:
+		cmd[-1:-1] = ['/rebuild']
+	return cmd
 
 # build Python in 32-bit mode
+def do_32_build():
+	cmd = construct_build_command()
+	return subprocess.Popen(cmd, env=env32).wait()
+
+def do_64_build():
+	cmd = construct_build_command(['-p', 'x64'])
+	return subprocess.Popen(cmd, env=env64).wait()
+
