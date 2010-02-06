@@ -30,16 +30,27 @@ def get_environment_from_batch_command(env_cmd, initial=None):
 	"""
 	if not isinstance(env_cmd, (list, tuple)):
 		env_cmd = [env_cmd]
+	# construct the command that will alter the environment
 	env_cmd = subprocess.list2cmdline(env_cmd)
+	# create a tag so we can tell in the output when the proc is done
 	tag = 'Done running command'
+	# construct a cmd.exe command to do accomplish this
 	cmd = 'cmd.exe /s /c "{env_cmd} && echo "{tag}" && set"'.format(**vars())
+	# launch the process
 	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=initial)
+	# parse the output sent to stdout
 	lines = proc.stdout
+	# consume whatever output occurs until the tag is reached
 	consume(itertools.takewhile(lambda l: tag not in l, lines))
+	# define a way to handle each KEY=VALUE line
 	handle_line = lambda l: l.rstrip().split('=',1)
+	# parse key/values into pairs
 	pairs = map(handle_line, lines)
+	# make sure the pairs are valid
 	valid_pairs = filter(validate_pair, pairs)
+	# construct a dictionary of the pairs
 	result = dict(valid_pairs)
+	# let the process finish
 	proc.communicate()
 	return result
 
