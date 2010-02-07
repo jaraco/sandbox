@@ -3,18 +3,21 @@ import os
 import sys
 import subprocess
 import itertools
+import traceback
 from optparse import OptionParser
 
 def create_test_dir():
 	"""
 	create a directory for the test
 	"""
+	global test_dir
 	test_dir = os.path.expanduser('~/build/python')
 	build_existed_prior = os.path.exists(os.path.expanduser('~/build'))
+	return
 	if os.path.exists(test_dir):
 		print("Test directory already exists. Aborting", file=sys.stderr)
 		raise SystemExit(1)
-	os.path.makedirs(test_dir)
+	os.makedirs(test_dir)
 
 def checkout_source():
 	cmd = [
@@ -28,8 +31,9 @@ def checkout_source():
 		raise SystemExit(result)
 
 def find_vs9():
-	# find VS9
-	search_path = map(os.environ, ['PROGRAMFILES', 'PROGRAMFILES(X86)'])
+	"Find VS9"
+	keys = ['PROGRAMFILES', 'PROGRAMFILES(X86)']
+	search_path = [os.environ.get(key) for key in keys if os.environ.has_key(key)]
 	vs_candidate_dirs = [os.path.join(base, 'Microsoft Visual Studio 9.0') for base in search_path]
 	return next(iter(filter(os.path.isdir, vs_candidate_dirs)))
 
@@ -85,7 +89,8 @@ def get_environment_from_batch_command(env_cmd, initial=None):
 	return result
 
 def get_vcvars_env(*params):
-	vcvarsall = r'c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcvarsall.bat'
+	vs9 = find_vs9()
+	vcvarsall = os.path.join(find_vs9(), 'VC', 'vcvarsall.bat')
 	# even vcvarsall needs some environment to function properly
 	initial = dict(VS90COMNTOOLS=os.environ['VS90COMNTOOLS'])
 	initial=None
@@ -125,3 +130,27 @@ def do_64_build():
 	cmd = construct_build_command(['-p', 'x64'])
 	return subprocess.Popen(cmd, env=env64).wait()
 
+def cleanup():
+	os.chdir(orig_dir)
+	cmd = ['cmd', '/c', 'rmdir', '/s', '/q', test_dir]
+	subprocess.Popen(cmd)
+
+# orchestrate the test
+def orchestrate_test():
+	global orig_dir
+	orig_dir = os.getcwd()
+	create_test_dir()
+	try:
+		checkout_source()
+		os.chdir(os.path.join(test_dir, 'python-py3k', 'pcbuild'))
+		res = do_32_build()
+		print("result of 32-bit build is {0}".format(res))
+		res = do_64_build()
+		print("result of 32-bit build is {0}".format(res))
+	except:
+		traceback.print_exc()
+	print("Cleaning up...")
+	#cleanup()
+
+if __name__ == '__main__':
+	orchestrate_test()
