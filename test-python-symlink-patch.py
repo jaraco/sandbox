@@ -6,6 +6,8 @@ import subprocess
 import itertools
 import traceback
 import urllib2
+import urllib
+import urlparse
 from optparse import OptionParser
 from BeautifulSoup import BeautifulSoup
 
@@ -46,24 +48,29 @@ def find_patches(soup):
 
 def get_patches(soup):
 	for link in find_patches(soup):
-		yield get_patch(link.href)
+		yield get_patch(link.parent['href'])
 
-def get_patch(url):
-	url = urllib2.urlopen(url)
-	dest = os.path.join(test_dir, 'python-py3k', os.path.basename(url))
+bug_url = 'http://bugs.python.org/issue1578269'
+
+def get_patch(link_ref):
+	href = urlparse.urljoin(bug_url, link_ref)
+	url = urllib2.urlopen(href)
+	filename = urllib.unquote(os.path.basename(href))
+	dest = os.path.join(test_dir, 'python-py3k', filename)
 	open(dest, 'wb').write(url.read())
 	return dest
 
 def get_soup():
-	bug = 'http://bugs.python.org/issue1578269'
-	return BeautifulSoup(urllib2.urlopen(bug).read())
+	return BeautifulSoup(urllib2.urlopen(bug_url).read())
 
 def apply_patch():
-	patch = next(find_patches(get_soup()))
+	patch = next(get_patches(get_soup()))
+	print("Applying {patch}".format(**vars()))
+	in_quotes = lambda s: '"{0}"'.format(s)
 	cmd = [
 		'TortoiseMerge',
-		'/diff:' + patch,
-		'/patchpath:' + os.path.join(test_dir, 'python-py3k'),
+		'/diff:' + in_quotes(patch),
+		'/patchpath:' + in_quotes(os.path.join(test_dir, 'python-py3k')),
 		]
 	res = subprocess.Popen(cmd).wait()
 	if res != 0:
@@ -186,7 +193,10 @@ def run_test(*params):
 def cleanup():
 	os.chdir(orig_dir)
 	cmd = ['cmd', '/c', 'rmdir', '/s', '/q', test_dir]
-	subprocess.Popen(cmd)
+	res = subprocess.Popen(cmd).wait()
+	if not res == 0:
+		print("Error cleaning up", file=sys.stderr)
+		raise SystemExit(1)
 
 # orchestrate the test
 def orchestrate_test():
