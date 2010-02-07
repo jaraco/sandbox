@@ -56,24 +56,22 @@ def get_patch(link_ref):
 	href = urlparse.urljoin(bug_url, link_ref)
 	url = urllib2.urlopen(href)
 	filename = urllib.unquote(os.path.basename(href))
-	dest = os.path.join(test_dir, 'python-py3k', filename)
-	open(dest, 'wb').write(url.read())
-	return dest
+	return filename, url.read()
 
 def get_soup():
 	return BeautifulSoup(urllib2.urlopen(bug_url).read())
 
 def apply_patch():
-	patch = next(get_patches(get_soup()))
-	print("Applying {patch}".format(**vars()))
-	in_quotes = lambda s: '"{0}"'.format(s)
-	cmd = [
-		'TortoiseMerge',
-		'/diff:' + in_quotes(patch),
-		'/patchpath:' + in_quotes(os.path.join(test_dir, 'python-py3k')),
-		]
-	res = subprocess.Popen(cmd).wait()
-	if res != 0:
+	filename, patch = next(get_patches(get_soup()))
+	patch_target = os.path.join(test_dir, 'python-py3k')
+	print("Applying {filename} on {patch_target}".format(**vars()))
+	orig_dir = os.getcwd()
+	os.chdir(patch_target)
+	cmd = 'patch -p0 -t'
+	proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+	stdout, stderr = proc.communicate(patch)
+	os.chdir(orig_dir)
+	if proc.returncode != 0:
 		print("Error applying patch", file=sys.stderr)
 		raise SystemExit(1)
 
@@ -214,9 +212,11 @@ def orchestrate_test():
 		print("result of 32-bit build is {0}".format(res))
 		run_test('-x64')
 	except:
-		traceback.print_exc()
-	print("Cleaning up...")
-	cleanup()
+		#traceback.print_exc()
+		raise
+	finally:
+		print("Cleaning up...")
+		cleanup()
 
 if __name__ == '__main__' and not 'skip' in sys.argv:
 	orchestrate_test()
