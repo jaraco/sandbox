@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os
 import sys
+import re
 import subprocess
 import itertools
 import traceback
@@ -14,6 +15,8 @@ def create_test_dir():
 	"""
 	global test_dir
 	test_dir = os.path.expanduser('~/build/python')
+	test_dir = os.path.normpath(test_dir)
+	assert not '/' in test_dir
 	build_existed_prior = os.path.exists(os.path.expanduser('~/build'))
 	if os.path.exists(test_dir):
 		print("Test directory already exists. Aborting", file=sys.stderr)
@@ -31,11 +34,18 @@ def checkout_source():
 		print("Checkout failed", file=sys.stderr)
 		raise SystemExit(result)
 
+def patch_number(link):
+	number = re.compile(r'\d+(\.\d+)?')
+	return float(number.search(link.string).group(0))
+
 def find_patches(soup):
-	ispatch = lambda l: 'patch' in l.string
-	links = filter(ispatch, soup.findAll('a'))
-	links.sort(key=lambda l: l.string, reverse=True)
-	for link in links:
+	files = soup.find(attrs='files')
+	links = files.findAll(text=re.compile(r'.*\.patch'))
+	links.sort(key=patch_number, reverse=True)
+	return links
+
+def get_patches(soup):
+	for link in find_patches(soup):
 		yield get_patch(link.href)
 
 def get_patch(url):
@@ -44,9 +54,12 @@ def get_patch(url):
 	open(dest, 'wb').write(url.read())
 	return dest
 
+def get_soup():
+	bug = 'http://bugs.python.org/issue1578269'
+	return BeautifulSoup(urllib2.urlopen(bug).read())
+
 def apply_patch():
-	soup = BeautifulSoup(urllib2.urlopen('http://bugs.python.org/issue1578269').read())
-	patch = next(find_patches(soup))
+	patch = next(find_patches(get_soup()))
 	cmd = [
 		'TortoiseMerge',
 		'/diff:' + patch,
@@ -195,5 +208,5 @@ def orchestrate_test():
 	print("Cleaning up...")
 	cleanup()
 
-if __name__ == '__main__':
+if __name__ == '__main__' and not 'skip' in sys.argv:
 	orchestrate_test()
