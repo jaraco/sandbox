@@ -130,6 +130,13 @@ def do_64_build():
 	cmd = construct_build_command(['-p', 'x64'])
 	return subprocess.Popen(cmd, env=env64).wait()
 
+def run_test(*params):
+	cmd = [
+		'rt.bat',
+		'-q',
+		] + list(params)
+	res = subprocess.Popen(cmd).wait()
+
 def cleanup():
 	os.chdir(orig_dir)
 	cmd = ['cmd', '/c', 'rmdir', '/s', '/q', test_dir]
@@ -145,8 +152,10 @@ def orchestrate_test():
 		os.chdir(os.path.join(test_dir, 'python-py3k', 'pcbuild'))
 		res = do_32_build()
 		print("result of 32-bit build is {0}".format(res))
+		run_test()
 		res = do_64_build()
 		print("result of 32-bit build is {0}".format(res))
+		run_test('-x64')
 	except:
 		traceback.print_exc()
 	print("Cleaning up...")
