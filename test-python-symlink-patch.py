@@ -1,3 +1,15 @@
+#!python
+
+"""
+This script fully automates the checkout, patch, compile, test cycle
+for the Windows symlink support patch.
+
+Prerequisites:
+	Visual Studio 2008
+	Subversion command-line client
+	GNU patch
+"""
+
 from __future__ import print_function
 import os
 import sys
@@ -186,7 +198,17 @@ def run_test(*params):
 		'rt.bat',
 		'-q',
 		] + list(params)
-	res = subprocess.Popen(cmd).wait()
+	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	stdout, stderr = proc.communicate()
+	if not proc.returncode == 0:
+		print("Warning: rt.bat returned {proc.returncode}".format(**vars()))
+	return proc.returncode, stdout, stderr
+
+def save_test_results(results, filename):
+	code, stdout, stderr = results
+	open(filename, 'w').write(str(code))
+	open(filename+':stdout', 'w').write(stdout)
+	open(filename+':stderr', 'w').write(stderr)
 
 def cleanup():
 	os.chdir(orig_dir)
@@ -207,10 +229,12 @@ def orchestrate_test():
 		os.chdir(os.path.join(test_dir, 'python-py3k', 'pcbuild'))
 		res = do_32_build()
 		print("result of 32-bit build is {0}".format(res))
-		run_test()
+		filename = os.path.join(orig_dir, '32-bit test results')
+		save_test_results(run_test(), filename)
 		res = do_64_build()
-		print("result of 32-bit build is {0}".format(res))
-		run_test('-x64')
+		print("result of 64-bit build is {0}".format(res))
+		filename = os.path.join(orig_dir, '64-bit test results')
+		save_test_results(run_test('-x64'), filename)
 	except:
 		#traceback.print_exc()
 		raise
