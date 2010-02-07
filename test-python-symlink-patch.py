@@ -48,7 +48,15 @@ def get_patch(url):
 def apply_patch():
 	soup = BeautifulSoup(urllib2.urlopen('http://bugs.python.org/issue1578269').read())
 	patch = next(find_patches(soup))
-	raise NotImplementedError
+	cmd = [
+		'TortoiseMerge',
+		'/diff:' + patch,
+		'/patchpath:' + os.path.join(test_dir, 'python-py3k'),
+		]
+	res = subprocess.Popen(cmd).wait()
+	if res != 0:
+		print("Error applying patch", file=sys.stderr)
+		raise SystemExit(1)
 
 def find_vs9():
 	"Find VS9"
