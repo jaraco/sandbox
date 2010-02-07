@@ -4,7 +4,9 @@ import sys
 import subprocess
 import itertools
 import traceback
+import urllib2
 from optparse import OptionParser
+from BeautifulSoup import BeautifulSoup
 
 def create_test_dir():
 	"""
@@ -29,6 +31,24 @@ def checkout_source():
 	if result != 0:
 		print("Checkout failed", file=sys.stderr)
 		raise SystemExit(result)
+
+def find_patches(soup):
+	ispatch = lambda l: 'patch' in l.string
+	links = filter(ispatch, soup.findAll('a'))
+	links.sort(key=lambda l: l.string, reverse=True)
+	for link in links:
+		yield get_patch(link.href)
+
+def get_patch(url):
+	url = urllib2.urlopen(url)
+	dest = os.path.join(test_dir, 'python-py3k', os.path.basename(url))
+	open(dest, 'wb').write(url.read())
+	return dest
+
+def apply_patch():
+	soup = BeautifulSoup(urllib2.urlopen('http://bugs.python.org/issue1578269').read())
+	patch = next(find_patches(soup))
+	raise NotImplementedError
 
 def find_vs9():
 	"Find VS9"
@@ -149,6 +169,7 @@ def orchestrate_test():
 	create_test_dir()
 	try:
 		checkout_source()
+		apply_patch()
 		os.chdir(os.path.join(test_dir, 'python-py3k', 'pcbuild'))
 		res = do_32_build()
 		print("result of 32-bit build is {0}".format(res))
