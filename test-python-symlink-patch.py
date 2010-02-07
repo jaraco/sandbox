@@ -15,7 +15,6 @@ def create_test_dir():
 	global test_dir
 	test_dir = os.path.expanduser('~/build/python')
 	build_existed_prior = os.path.exists(os.path.expanduser('~/build'))
-	return
 	if os.path.exists(test_dir):
 		print("Test directory already exists. Aborting", file=sys.stderr)
 		raise SystemExit(1)
@@ -63,7 +62,10 @@ def find_vs9():
 	keys = ['PROGRAMFILES', 'PROGRAMFILES(X86)']
 	search_path = [os.environ.get(key) for key in keys if os.environ.has_key(key)]
 	vs_candidate_dirs = [os.path.join(base, 'Microsoft Visual Studio 9.0') for base in search_path]
-	return next(iter(filter(os.path.isdir, vs_candidate_dirs)))
+	has_VC_child = lambda dir: os.path.isdir(os.path.join(dir, 'VC'))
+	tests = os.path.isdir, has_VC_child
+	test_adequacy = lambda candidate: all(t(candidate) for t in tests)
+	return next(iter(itertools.ifilter(test_adequacy, vs_candidate_dirs)))
 
 def validate_pair(ob):
 	try:
@@ -119,6 +121,9 @@ def get_environment_from_batch_command(env_cmd, initial=None):
 def get_vcvars_env(*params):
 	vs9 = find_vs9()
 	vcvarsall = os.path.join(find_vs9(), 'VC', 'vcvarsall.bat')
+	if not os.path.isfile(vcvarsall):
+		print("Couldn't find vcvarsall", file=sys.stderr)
+		raise SystemExit(1)
 	# even vcvarsall needs some environment to function properly
 	initial = dict(VS90COMNTOOLS=os.environ['VS90COMNTOOLS'])
 	initial=None
@@ -188,7 +193,7 @@ def orchestrate_test():
 	except:
 		traceback.print_exc()
 	print("Cleaning up...")
-	#cleanup()
+	cleanup()
 
 if __name__ == '__main__':
 	orchestrate_test()
