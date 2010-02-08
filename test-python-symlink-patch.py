@@ -202,6 +202,7 @@ def run_test(*params):
 	return proc.returncode, stdout, stderr
 
 def save_test_results(results, filename):
+	filename = os.path.join(os.environ['USERPROFILE'], filename)
 	code, stdout, stderr = results
 	open(filename, 'w').write(str(code))
 	open(filename+':stdout', 'w').write(stdout)
