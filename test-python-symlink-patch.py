@@ -227,12 +227,10 @@ def orchestrate_test():
 		os.chdir(os.path.join(test_dir, 'python-py3k', 'pcbuild'))
 		res = do_32_build()
 		print("result of 32-bit build is {0}".format(res))
-		filename = os.path.join(orig_dir, '32-bit test results')
-		save_test_results(run_test(), filename)
+		save_test_results(run_test(), '32-bit test results')
 		res = do_64_build()
 		print("result of 64-bit build is {0}".format(res))
-		filename = os.path.join(orig_dir, '64-bit test results')
-		save_test_results(run_test('-x64'), filename)
+		save_test_results(run_test('-x64'), '64-bit test results')
 	except:
 		#traceback.print_exc()
 		raise
