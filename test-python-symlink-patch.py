@@ -38,15 +38,18 @@ def create_test_dir():
 	os.makedirs(test_dir)
 
 def checkout_source():
+	global pcbuild_dir
+	target = os.path.join(test_dir, 'python-py3k')
 	cmd = [
 		'svn', 'co',
 		'http://svn.python.org/projects/python/branches/py3k',
-		os.path.join(test_dir, 'python-py3k'),
+		target,
 	]
 	result = subprocess.Popen(cmd).wait()
 	if result != 0:
 		print("Checkout failed", file=sys.stderr)
 		raise SystemExit(result)
+	pcbuild_dir = os.path.join(target, 'pcbuild')
 
 def patch_number(link):
 	number = re.compile(r'\d+(\.\d+)?')
@@ -195,10 +198,13 @@ def run_test(*params):
 		'rt.bat',
 		'-q',
 		] + list(params)
+	orig_dir = os.getcwd()
+	os.chdir(pcbuild_dir)
 	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdout, stderr = proc.communicate()
 	if not proc.returncode == 0:
 		print("Warning: rt.bat returned {proc.returncode}".format(**vars()))
+	os.chdir(orig_dir)
 	return proc.returncode, stdout, stderr
 
 def save_test_results(results, filename):
@@ -209,7 +215,6 @@ def save_test_results(results, filename):
 	open(filename+':stderr', 'w').write(stderr)
 
 def cleanup():
-	os.chdir(orig_dir)
 	cmd = ['cmd', '/c', 'rmdir', '/s', '/q', test_dir]
 	res = subprocess.Popen(cmd).wait()
 	if not res == 0:
@@ -218,22 +223,16 @@ def cleanup():
 
 # orchestrate the test
 def orchestrate_test():
-	global orig_dir
-	orig_dir = os.getcwd()
 	create_test_dir()
 	try:
 		checkout_source()
 		apply_patch()
-		os.chdir(os.path.join(test_dir, 'python-py3k', 'pcbuild'))
 		res = do_32_build()
 		print("result of 32-bit build is {0}".format(res))
 		save_test_results(run_test(), '32-bit test results')
 		res = do_64_build()
 		print("result of 64-bit build is {0}".format(res))
 		save_test_results(run_test('-x64'), '64-bit test results')
-	except:
-		#traceback.print_exc()
-		raise
 	finally:
 		print("Cleaning up...")
 		cleanup()
