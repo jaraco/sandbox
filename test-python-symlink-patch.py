@@ -41,12 +41,10 @@ def create_test_dir():
 
 def checkout_source():
 	global pcbuild_dir
+	url = 'http://svn.python.org/projects/python/branches/py3k'
+	print("Checking out Python from {url}".format(**vars()))
 	target = os.path.join(test_dir, 'python-py3k')
-	cmd = [
-		'svn', 'co',
-		'http://svn.python.org/projects/python/branches/py3k',
-		target,
-	]
+	cmd = ['svn', 'co', '-q', url, target]
 	result = subprocess.Popen(cmd).wait()
 	if result != 0:
 		print("Checkout failed", file=sys.stderr)
@@ -186,35 +184,38 @@ def construct_build_command(args=[]):
 		cmd[-1:-1] = ['/rebuild']
 	return cmd
 
-# build Python in 32-bit mode
-def do_32_build():
-	cmd = construct_build_command()
-	return subprocess.Popen(cmd, env=env32).wait()
-
-def do_64_build():
-	cmd = construct_build_command(['-p', 'x64'])
-	return subprocess.Popen(cmd, env=env64).wait()
+def do_build(word_size):
+	print("building {word_size}-bit python".format(**vars()))
+	env_args = {32: [], 64: ['x64']}[word_size]
+	env = get_vcvars_env(*env_args)
+	cmd_args = {32: [], 64: ['-p', 'x64']}[word_size]
+	cmd = construct_build_command(cmd_args)
+	proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	output, stderr = proc.communicate()
+	print("result of {word_size}-bit build is {proc.returncode}".format(**vars()))
+	return proc.returncode, output
 
 def run_test(*params):
+	print("Running regression tests")
 	cmd = [
 		'rt.bat',
 		'-q',
 		] + list(params)
 	orig_dir = os.getcwd()
 	os.chdir(pcbuild_dir)
-	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	stdout, stderr = proc.communicate()
+	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	output, stderr = proc.communicate()
 	if not proc.returncode == 0:
 		print("Warning: rt.bat returned {proc.returncode}".format(**vars()))
 	os.chdir(orig_dir)
-	return proc.returncode, stdout, stderr
+	return proc.returncode, output
 
-def save_test_results(results, filename):
-	filename = os.path.join(os.environ['USERPROFILE'], filename)
-	code, stdout, stderr = results
-	open(filename, 'w').write(str(code))
-	open(filename+':stdout', 'w').write(stdout)
-	open(filename+':stderr', 'w').write(stderr)
+def save_results(results, filename):
+	filename = os.path.join(os.environ['USERPROFILE'], filename+'.txt')
+	code, output = results
+	f = open(filename, 'wb')
+	f.write(str(code)+'\n')
+	f.write(output)
 
 def cleanup():
 	cmd = ['cmd', '/c', 'rmdir', '/s', '/q', test_dir]
@@ -228,8 +229,8 @@ def do_builds():
 	create_test_dir()
 	checkout_source()
 	apply_patch()
-	res = do_32_build()
-	print("result of 32-bit build is {0}".format(res))
+	code, output = do_build(32)
+	#code, output = do_build(64)
 
 # orchestrate the test
 def orchestrate_test():
@@ -238,12 +239,11 @@ def orchestrate_test():
 	try:
 		checkout_source()
 		if not options.no_patch: apply_patch()
-		res = do_32_build()
-		print("result of 32-bit build is {0}".format(res))
-		save_test_results(run_test(), '32-bit test results')
-		res = do_64_build()
-		print("result of 64-bit build is {0}".format(res))
-		save_test_results(run_test('-x64'), '64-bit test results')
+		save_results(do_build(32), '32-bit build results')
+		save_results(run_test(), '32-bit test results')
+		if not options.skip_64_bit:
+			save_results(do_build(64), '64-bit build results')
+			save_results(run_test('-x64'), '64-bit test results')
 	finally:
 		print("Cleaning up...")
 		cleanup()
@@ -266,6 +266,7 @@ def get_options():
 	parser.add_option('-b', '--just-build', default=False, action="store_true")
 	parser.add_option('-c', '--clean', default=False, action="store_true")
 	parser.add_option('--no-patch', default=False, action="store_true")
+	parser.add_option('--skip-64-bit', default=False, action="store_true")
 	options, args = parser.parse_args()
 
 if __name__ == '__main__':
