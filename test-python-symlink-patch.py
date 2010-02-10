@@ -8,6 +8,20 @@ Prerequisites:
 	Visual Studio 2008
 	Subversion command-line client
 	GNU patch
+
+If you run it without any command line parameters, it will create
+~/build/python, check out the py3k branch to python-py3k, apply the
+latest patch from the bugtracker, and then for each of the 32-bit and
+64-bit architectures, build python and run the regression tests for it.
+
+When it is done, it leaves four files in the user's home directory:
+
+32-bit build results.txt
+32-bit test results.txt
+64-bit build results.txt
+64-bit test results.txt
+
+It then cleans up the rest.
 """
 
 from __future__ import print_function
@@ -154,13 +168,7 @@ def get_vcvars_env(*params):
 	if not os.path.isfile(vcvarsall):
 		print("Couldn't find vcvarsall", file=sys.stderr)
 		raise SystemExit(1)
-	# even vcvarsall needs some environment to function properly
-	initial = dict(VS90COMNTOOLS=os.environ['VS90COMNTOOLS'])
-	initial=None
-	return get_environment_from_batch_command([vcvarsall]+list(params), initial)
-
-env32 = get_vcvars_env()
-env64 = get_vcvars_env('x64')
+	return get_environment_from_batch_command([vcvarsall]+list(params))
 
 def construct_build_command(args=[]):
 	"""
