@@ -23,14 +23,16 @@ import urlparse
 from optparse import OptionParser
 from BeautifulSoup import BeautifulSoup
 
-def create_test_dir():
-	"""
-	create a directory for the test
-	"""
+def init():
 	global test_dir
 	test_dir = os.path.expanduser('~/build/python')
 	test_dir = os.path.normpath(test_dir)
 	assert not '/' in test_dir
+
+def create_test_dir():
+	"""
+	create a directory for the test
+	"""
 	build_existed_prior = os.path.exists(os.path.expanduser('~/build'))
 	if os.path.exists(test_dir):
 		print("Test directory already exists. Aborting", file=sys.stderr)
@@ -177,7 +179,7 @@ def construct_build_command(args=[]):
 		'cmd', '/c',
 		'vcbuild',
 		'/useenv',
-		'pcbuild.sln',
+		os.path.join(pcbuild_dir, 'pcbuild.sln'),
 		'|'.join([options.conf, options.platf])
 	]
 	if options.rebuild:
@@ -221,8 +223,17 @@ def cleanup():
 		print("Error cleaning up", file=sys.stderr)
 		raise SystemExit(1)
 
+def do_builds():
+	init()
+	create_test_dir()
+	checkout_source()
+	apply_patch()
+	res = do_32_build()
+	print("result of 32-bit build is {0}".format(res))
+
 # orchestrate the test
 def orchestrate_test():
+	init()
 	create_test_dir()
 	try:
 		checkout_source()
@@ -237,5 +248,24 @@ def orchestrate_test():
 		print("Cleaning up...")
 		cleanup()
 
-if __name__ == '__main__' and not 'skip' in sys.argv:
-	orchestrate_test()
+def handle_command_line():
+	get_options()
+	if options.clean:
+		init(); cleanup()
+		return
+	if options.just_build:
+		do_builds()
+		return
+	if not options.skip:
+		orchestrate_test()
+
+def get_options():
+	global options
+	parser = OptionParser()
+	parser.add_option('-s', '--skip', default=False, action="store_true")
+	parser.add_option('-b', '--just-build', default=False, action="store_true")
+	parser.add_option('-c', '--clean', default=False, action="store_true")
+	options, args = parser.parse_args()
+
+if __name__ == '__main__':
+	handle_command_line()
