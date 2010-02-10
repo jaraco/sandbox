@@ -237,7 +237,7 @@ def orchestrate_test():
 	create_test_dir()
 	try:
 		checkout_source()
-		apply_patch()
+		if not options.no_patch: apply_patch()
 		res = do_32_build()
 		print("result of 32-bit build is {0}".format(res))
 		save_test_results(run_test(), '32-bit test results')
@@ -265,6 +265,7 @@ def get_options():
 	parser.add_option('-s', '--skip', default=False, action="store_true")
 	parser.add_option('-b', '--just-build', default=False, action="store_true")
 	parser.add_option('-c', '--clean', default=False, action="store_true")
+	parser.add_option('--no-patch', default=False, action="store_true")
 	options, args = parser.parse_args()
 
 if __name__ == '__main__':
