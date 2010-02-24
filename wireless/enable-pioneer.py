@@ -1,7 +1,7 @@
+#http://msdn.microsoft.com/en-us/library/ms705973%28VS.85%29.aspx
 from comtypes.gen import ADHOCLib
 from comtypes import GUID
 from ctypes import POINTER
 
-mgr = ADHOCLib.IDot11AdHocManager()
-p = POINTER(GUID)()
-mgr.GetIEnumDot11AdHocNetworks(mgr)
+mgr = ADHOCLib.Dot11AdHocManager()
+networks = mgr.GetIEnumDot11AdHocNetworks()
