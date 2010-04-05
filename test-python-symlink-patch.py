@@ -101,11 +101,16 @@ def apply_patch():
 		print("Error applying patch", file=sys.stderr)
 		raise SystemExit(1)
 
-def find_vs9():
-	"Find VS9"
+def find_visual_studio():
+	"Find Visual Studio 9 or 10"
+	versions = ['9.0', '10.0']
 	keys = ['PROGRAMFILES', 'PROGRAMFILES(X86)']
 	search_path = [os.environ.get(key) for key in keys if os.environ.has_key(key)]
-	vs_candidate_dirs = [os.path.join(base, 'Microsoft Visual Studio 9.0') for base in search_path]
+	path_versions = itertools.product(search_path, versions)
+	vs_candidate_dirs = [
+		os.path.join(base, 'Microsoft Visual Studio ' + version)
+		for base, version in path_versions
+		]
 	has_VC_child = lambda dir: os.path.isdir(os.path.join(dir, 'VC'))
 	tests = os.path.isdir, has_VC_child
 	test_adequacy = lambda candidate: all(t(candidate) for t in tests)
@@ -163,8 +168,8 @@ def get_environment_from_batch_command(env_cmd, initial=None):
 	return result
 
 def get_vcvars_env(*params):
-	vs9 = find_vs9()
-	vcvarsall = os.path.join(find_vs9(), 'VC', 'vcvarsall.bat')
+	visual_studio = find_visual_studio()
+	vcvarsall = os.path.join(visual_studio, 'VC', 'vcvarsall.bat')
 	if not os.path.isfile(vcvarsall):
 		print("Couldn't find vcvarsall", file=sys.stderr)
 		raise SystemExit(1)
@@ -270,7 +275,7 @@ def handle_command_line():
 def get_options():
 	global options
 	parser = OptionParser()
-	parser.add_option('-s', '--skip', default=False, action="store_true")
+	parser.add_option('-s', '--skip', default=False, action="store_true", help="Don't do anything - useful for interactive mode")
 	parser.add_option('-b', '--just-build', default=False, action="store_true")
 	parser.add_option('-c', '--clean', default=False, action="store_true")
 	parser.add_option('--no-patch', default=False, action="store_true")
