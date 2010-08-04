@@ -65,6 +65,13 @@ def get_location_for_sense(sense):
 			return question.find('Answer').text
 	# return None
 
+def decode_body_strings(bodies):
+	body_strings = []
+	for body in bodies:
+		body_string = body.text.encode('ascii', 'replace')
+		body_strings.append(body_string)
+	return body_strings
+
 def assemble_rows(tree):
 	"""
 	Given a root element of a tree, return a list of rows suitable for
