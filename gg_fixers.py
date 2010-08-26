@@ -56,12 +56,12 @@ def get_sense_ids(senses):
 		ids.append(id)
 	return ids
 
-def get_location_for_sense(sense):
+def get_location_for_sense(sense, label = 'S: STORY TAKES PLACE'):
 	indexing = sense.find('Indexing')
 	questions = indexing.findall('QuestionIndex')
 	for question in questions:
 		# find the one with the ID S: STORY TAKES PLACE
-		if question.attrib['Id'] == 'S: STORY TAKES PLACE':
+		if question.attrib['Id'] == label:
 			return question.find('Answer').text
 	# return None
 
@@ -89,7 +89,7 @@ def construct_rows(tree):
 	"""
 	Similar to assemble_rows, except is sense-oriented.
 	"""
-	senses = tree.getiterator('SenseMakignItem')
+	senses = tree.getiterator('SenseMakingItem')
 	# create an empty list of row
 	rows = []
 	for sense in senses:
@@ -159,6 +159,76 @@ def save_clean_data(data):
 	file = open('output.dat', 'w')
 	file.write(data)
 
+class Story:
+	"""
+	A Story object for collecting info about various stories
+	"""
+	def __init__(self):
+		self.needs = set()
+
+	def add_need(self, need):
+		# make all needs lower case (or upper if you like)
+		need = need.lower()
+		self.needs.add(need)
+
+	def has_need(self, need):
+		"Return true if the supplied need is covered by this story"
+		need = need.lower()
+		return need in self.needs
+
+	def get_as_row(self):
+		"""Return a sequence of things useful for feeding to CSV"""
+		return self.text, self.id, self.location
+
+	def calculate_location(self):
+		# use open calais and geonames with self.needs and other
+		#  attributes of this object.
+		pass
+
+	# use __str__ to show how this object should be represented
+	def __str__(self):
+		return "Story object with %s needs" % self.needs
+
+def get_need_count(stories, need):
+	count = 0
+	for story in stories:
+		if story.has_need(need):
+			# count = count + 1
+			count += 1
+	return count
+
+"""
+Create a story and add needs manually
+my_story = Story()
+my_story.add_need('food')
+my_story.add_need('social relations')
+"""
+
+def story_from_xml_node(node):
+	"""
+	node should be a SenseMakingItem node from the dataset
+	"""
+	# create the new blank story (instance of the Story class)
+	story = Story()
+	question_nodes = node.find('Indexing').findall('QuestionIndex')
+	for question in question_nodes:
+		if question.attrib['Id'] != 'NEED':
+			# This is not a need node, so skip to the next question
+			continue
+		answers = question.findall('Answer')
+		for answer in answers:
+			story.add_need(answer.text)
+	story.text = node.find('Body').text
+	story.location = get_location_for_sense(node)
+	story.id = sense.attrib['ID']
+	return story
+
+def load_stories(filename):
+	tree = etree.parse(filename)
+	senses = tree.getiterator('SenseMakingItem')
+	stories = map(story_from_xml_node, senses)
+	return stories
+
 def main():
 	"The main entry point into our program"
 	# parse the command line arguments
@@ -174,7 +244,10 @@ def main():
 	if not os.path.isfile(filename):
 		print "The name you gave me doesn't appear to be a file"
 		raise SystemExit(1)
-	patch_xml_file(filename)
+	#patch_xml_file(filename)
+	global stories
+	stories = load_stories(filename)
+	print "There are", get_need_count(stories, 'Food'), "stories covering food"
 
 if __name__=='__main__':
 	pass 
