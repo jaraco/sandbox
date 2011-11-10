@@ -30,6 +30,19 @@ def calculate_accumulated_volumes(entrants):
 weighted_entrants = RangeMap(zip(calculate_accumulated_volumes(entrants), entrants),
 	key_match_comparator=operator.lt)
 
+# test our bounds
+assert weighted_entrants[0] == Entrant(1,1)
+assert weighted_entrants[0.99999] == Entrant(1,1)
+assert weighted_entrants[1] == Entrant(2,5)
+assert weighted_entrants[6] == Entrant(3,3)
+try:
+	weighted_entrants[acc_volume]
+except KeyError:
+	pass
+else:
+	raise ValueError("Expected exception")
+
+
 # now pick an entrant
 for x in range(3):
 	index = random.uniform(0, acc_volume)
