@@ -1,15 +1,17 @@
 from __future__ import print_function
 
 import random
+import operator
 from collections import namedtuple
 
 from jaraco.util.dictlib import RangeMap
 
 Entrant = namedtuple('Entrant', 'id volume')
 entrants = [
-	Entrant(100, 120000),
-	Entrant(102, 100),
-	Entrant(103, 30000),
+	Entrant(1, 1),
+	Entrant(2, 5),
+	Entrant(3, 3),
+	Entrant(4, 1),
 	# ...
 ]
 
@@ -25,10 +27,11 @@ def calculate_accumulated_volumes(entrants):
 # create a map where a volume between 0 and total_volume produces gives
 #  a weighted selection of Entrants.
 
-weighted_entrants = RangeMap(zip(calculate_accumulated_volumes(entrants), entrants))
+weighted_entrants = RangeMap(zip(calculate_accumulated_volumes(entrants), entrants),
+	key_match_comparator=operator.lt)
 
 # now pick an entrant
 for x in range(3):
-	index = random.random()*acc_volume
+	index = random.uniform(0, acc_volume)
 	pick = weighted_entrants[index]
 	print('picked', pick, '(%s)' % index)
