@@ -8,7 +8,7 @@ import sys
 import types
 import contextlib
 
-from fabric.api import run, cd
+from fabric.api import run, cd, task
 from fabric.contrib import files
 
 @contextlib.contextmanager
@@ -38,6 +38,7 @@ def _url_module_import(url):
 	exec data in module.__dict__
 	return module
 
+@task
 def install_distribute():
 	"""
 	Install distribute (setuptools) into the user's .local profile
@@ -47,15 +48,16 @@ def install_distribute():
 	download_url = '{DEFAULT_URL}distribute-{DEFAULT_VERSION}.tar.gz'.format(**vars(distribute_setup))
 	#prefix = '--prefix={prefix}'.format(**vars()) if prefix else ''
 	with _tarball_context(download_url):
-		run('python2.6 setup.py install --user')
+		run('~/python2.7.2/bin/python2.7 setup.py install --user')
 
+@task
 def install_cherrypy(url_base = '/cp'):
 	"""
 	Install a CherryPy application as a FCGI application on `url_base`.
 	"""
 	run('.local/bin/easy_install cherrypy')
 	run('.local/bin/easy_install flup')
-	
+
 	url_base = url_base.strip('/')
 	# set up the FCGI handler
 	files.append('public_html/.htaccess', [
@@ -69,14 +71,14 @@ def install_cherrypy(url_base = '/cp'):
 		'server.socket_host=None',
 		'server.socket_port=None',
 	])
-	
+
 	# install the cherrypy fcgi handler
 	files.append('public_html/cgi-bin/cherryd.fcgi', [
 		'#!/bin/sh',
 		'~/.local/bin/cherryd -P modules -c cherryd.conf -f -i app',
 	])
 	run('chmod 755 public_html/cgi-bin/cherryd.fcgi')
-	
+
 	run('mkdir -p public_html/cgi-bin/modules')
 	files.append('public_html/cgi-bin/modules/app.py', [
 		'import cherrypy',
