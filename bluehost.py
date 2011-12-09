@@ -47,7 +47,7 @@ def install_distribute():
 	distribute_setup = _url_module_import('http://python-distribute.org/distribute_setup.py')
 	download_url = '{DEFAULT_URL}distribute-{DEFAULT_VERSION}.tar.gz'.format(**vars(distribute_setup))
 	#prefix = '--prefix={prefix}'.format(**vars()) if prefix else ''
-	if not files.exist('~/python2.7.2'):
+	if not files.exist('~/python-2.7.2'):
 		build_python_version('2.7.2')
 	with _tarball_context(download_url):
 		run('~/python-2.7.2/bin/python2.7 setup.py install --user')
