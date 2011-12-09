@@ -47,8 +47,10 @@ def install_distribute():
 	distribute_setup = _url_module_import('http://python-distribute.org/distribute_setup.py')
 	download_url = '{DEFAULT_URL}distribute-{DEFAULT_VERSION}.tar.gz'.format(**vars(distribute_setup))
 	#prefix = '--prefix={prefix}'.format(**vars()) if prefix else ''
+	if not files.exist('~/python2.7.2'):
+		build_python_version('2.7.2')
 	with _tarball_context(download_url):
-		run('~/python2.7.2/bin/python2.7 setup.py install --user')
+		run('~/python-2.7.2/bin/python2.7 setup.py install --user')
 
 @task
 def install_cherrypy(url_base = '/cp'):
@@ -86,3 +88,26 @@ def install_cherrypy(url_base = '/cp'):
 		'\t"Define your application here"',
 		'cherrypy.tree.mount(Application(), "/cgi-bin/cherryd.fcgi")',
 	])
+
+@task
+def build_python_version(ver, prefix=None, alt=False):
+	"""
+	Install a given version of Python from source to the specified
+	prefix.
+	If `alt` is indicated, Python will be installed as alternate (i.e.
+	no `python` executable).
+	"""
+	if prefix is None: prefix = '~/python-{ver}'.format(**vars())
+	longver = 'Python-{ver}'.format(**vars())
+	if not files.exists(longver):
+		run('wget http://python.org/ftp/python/{ver}/{longver}.tgz -O - | tar xz'.format(**vars()))
+	with cd(longver):
+		# Linux has a de-facto standard of 4 bytes per unicode character.
+		#  So to share binaries, we need to set this flag, which is
+		#  different on Python2 versus Python3.
+		unicode_flag = '--enable-unicode=ucs4' if ver.startswith('2') else '--with-wide-unicode'
+		run('./configure --prefix {prefix} {unicode_flag}'.format(**vars()))
+		run('make')
+		type = 'altinstall' if alt else 'install'
+		run('make {type}'.format(**vars()))
+	run('rm -R {longver}'.format(**vars()))
