@@ -7,6 +7,8 @@ import os
 import sys
 import types
 import contextlib
+import io
+import textwrap
 
 from fabric.api import run, cd, task
 from fabric.contrib import files
@@ -47,10 +49,10 @@ def install_distribute():
 	distribute_setup = _url_module_import('http://python-distribute.org/distribute_setup.py')
 	download_url = '{DEFAULT_URL}distribute-{DEFAULT_VERSION}.tar.gz'.format(**vars(distribute_setup))
 	#prefix = '--prefix={prefix}'.format(**vars()) if prefix else ''
-	if not files.exist('~/python-2.7.2'):
-		build_python_version('2.7.2')
+	if not files.exists('~/python-2.7.3'):
+		build_python_version()
 	with _tarball_context(download_url):
-		run('~/python-2.7.2/bin/python2.7 setup.py install --user')
+		run('~/python-2.7.3/bin/python2.7 setup.py install --user')
 
 @task
 def install_cherrypy(url_base = '/cp'):
@@ -90,17 +92,19 @@ def install_cherrypy(url_base = '/cp'):
 	])
 
 @task
-def build_python_version(ver, prefix=None, alt=False):
+def build_python_version(ver='2.7.3', prefix=None, alt=False):
 	"""
 	Install a given version of Python from source to the specified
 	prefix.
 	If `alt` is indicated, Python will be installed as alternate (i.e.
 	no `python` executable).
 	"""
-	if prefix is None: prefix = '~/python-{ver}'.format(**vars())
+	short_ver = ver[:3]
+	if prefix is None: prefix = '~/Python-{ver}'.format(**vars())
 	longver = 'Python-{ver}'.format(**vars())
 	if not files.exists(longver):
-		run('wget http://python.org/ftp/python/{ver}/{longver}.tgz -O - | tar xz'.format(**vars()))
+		run('wget http://python.org/ftp/python/{ver}/{longver}.tgz -O - '
+			'| tar xz'.format(**vars()))
 	with cd(longver):
 		# Linux has a de-facto standard of 4 bytes per unicode character.
 		#  So to share binaries, we need to set this flag, which is
@@ -111,3 +115,39 @@ def build_python_version(ver, prefix=None, alt=False):
 		type = 'altinstall' if alt else 'install'
 		run('make {type}'.format(**vars()))
 	run('rm -R {longver}'.format(**vars()))
+	run('ln -s {prefix} python{short_ver}'.format(**vars()))
+
+@task
+def install_roundup(url_base = '/'):
+	"""
+	Install a Roundup Tracker as a FCGI application on `url_base`.
+	"""
+
+	run('.local/bin/easy_install roundup')
+	run('.local/bin/easy_install flup')
+
+	url_base = url_base.strip('/')
+	# set up the FCGI handler
+	files.append('public_html/.htaccess', [
+		'AddHandler fcgid-script .fcgi',
+		'RewriteRule ^{url_base}/(.*)$ /cgi-bin/roundup.fcgi/$1 [last]'.format(**vars()),
+	])
+
+	# install the cherrypy fcgi handler
+	runner = io.StringIO(textwrap.dedent(u"""
+		#!/home2/adamsrow/python2.7/bin/python
+		import os
+		from flup.server.fcgi import WSGIServer
+
+		home = os.environ['HOME']
+		tracker_home = os.path.join(home, 'Adams Row Tracker'))
+
+		from roundup import configuration
+		from roundup.cgi.wsgi_handler import RequestDispatcher
+
+		srv = WSGIServer(RequestDispatcher(tracker_home))
+		srv.run()
+	""").lstrip())
+
+	files.put(runner, 'public_html/cgi-bin/roundup.fcgi')
+	run('chmod 755 public_html/cgi-bin/roundup.fcgi')
