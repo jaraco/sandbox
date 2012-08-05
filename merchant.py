@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import re
+import collections
 
 from bs4 import BeautifulSoup
 import path
@@ -114,7 +115,7 @@ def data(row):
 def parse_table(node):
 	rows = iter(node.find_all('tr'))
 	header = data(next(rows))
-	rows = [dict(zip(header, data(row)))
+	rows = [collections.OrderedDict(zip(header, data(row)))
 		for row in rows]
 	return rows
 
