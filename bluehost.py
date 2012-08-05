@@ -49,10 +49,10 @@ def install_distribute():
 	distribute_setup = _url_module_import('http://python-distribute.org/distribute_setup.py')
 	download_url = '{DEFAULT_URL}distribute-{DEFAULT_VERSION}.tar.gz'.format(**vars(distribute_setup))
 	#prefix = '--prefix={prefix}'.format(**vars()) if prefix else ''
-	if not files.exists('~/python-2.7.3'):
+	if not files.exists('~/python2.7'):
 		build_python_version()
 	with _tarball_context(download_url):
-		run('~/python-2.7.3/bin/python2.7 setup.py install --user')
+		run('~/python2.7/bin/python2.7 setup.py install --user')
 
 @task
 def install_cherrypy(url_base = '/cp'):
