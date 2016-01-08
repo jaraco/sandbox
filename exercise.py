@@ -76,6 +76,7 @@ def test_cases():
     assert is_present_anywhere('ABCD', array_A)
     assert not is_present_anywhere('ABCE', array_A)
     assert not is_present_anywhere('ABFEA', array_A)
+    assert not is_present_anywhere('AF', array_A)
     assert is_present_anywhere('CGFEI', array_A)
     assert not is_present_anywhere('ABA', array_A)
     assert is_present_anywhere('BOY', array_B)
