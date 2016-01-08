@@ -75,11 +75,11 @@ def test_cases():
     assert adjacent_indices(array_A, (1,1)) == set([(0,1), (1,0), (2, 1), (1, 2)])
     assert is_present_anywhere('ABCD', array_A)
     assert not is_present_anywhere('ABCE', array_A)
+    assert not is_present_anywhere('ABFEA', array_A)
     assert is_present_anywhere('CGFEI', array_A)
     assert not is_present_anywhere('ABA', array_A)
     assert is_present_anywhere('BOY', array_B)
     assert is_present_anywhere('HOBO', array_B)
-    assert not is_present_anywhere('BOHOB')
 
 if __name__ == '__main__':
     test_cases()
