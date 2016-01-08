@@ -1,4 +1,9 @@
 def is_present(word, array, visited_indexes=(), position=None):
+    """
+    Can the word be found in the two-dimensional array
+    by traversing vertically or horizontally starting at
+    position (or all positions if None).
+    """
     assert isinstance(word, str)
     if word == '':
         return True
