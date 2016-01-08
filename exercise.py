@@ -69,6 +69,8 @@ array_B = [
 ]
 
 def test_cases():
+    assert adjacent_indices(array_A, (0,0)) == set([(1,0), (0,1)])
+    assert adjacent_indices(array_A, (1,1)) == set([(0,1), (1,0), (2, 1), (1, 2)])
     assert is_present_anywhere('ABCD', array_A)
     assert not is_present_anywhere('ABCE', array_A)
     assert is_present_anywhere('CGFEI', array_A)
