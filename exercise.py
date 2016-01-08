@@ -81,6 +81,8 @@ def test_cases():
     assert not is_present_anywhere('ABA', array_A)
     assert is_present_anywhere('BOY', array_B)
     assert is_present_anywhere('HOBO', array_B)
+    assert is_present_anywhere('', array_A)
+    assert is_present_anywhere('', array_B)
 
 if __name__ == '__main__':
     test_cases()
