@@ -19,7 +19,7 @@ def initial_positions(array):
     return itertools.product(range(width), range(height))
 
 
-def is_present(word, array, position, visited_indexes=()):
+def is_present(word, array, position, visited_indexes=set()):
     """
     Can the word be found in the two-dimensional array
     by traversing vertically or horizontally starting at
@@ -31,31 +31,28 @@ def is_present(word, array, position, visited_indexes=()):
     if word == '':
         return True
     letter = word[0]
-    indexes = matching_indexes(letter, array, position, visited_indexes)
-    if not indexes:
-        return False
-    return any(
-        is_present(word[:1], array, position, visited_indexes + (position,))
-        for position in indexes
+    x, y = position
+    return array[x][y] == letter and any(
+        is_present(word[:1], array, position, visited_indexes.union([position]))
+        for position in adjacent_indices(array, position) - visited_indexes
     )
 
 
-def matching_indexes(letter, array, position, visited_indexes):
+def adjacent_indices(array, position):
     """
-    find indexes into array that match letter adjacent to position
+    Find indexes into array adjacent to position.
+
+    Assumes square array
     """
     x, y = position
     width, height = len(array), len(array[0])
-    indexes = (
+    return set(
         (i, j)
         for i in (x - 1, x + 1)
         for j in (y - 1, y + 1)
         if 0 <= i < width
         and 0 <= j < height
-        and letter == array[i][j]
-        and (i,j) not in visited_indexes
     )
-    return indexes
 
 
 array_A = [
