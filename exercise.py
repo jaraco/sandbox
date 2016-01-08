@@ -48,10 +48,12 @@ def adjacent_indices(array, position):
     width, height = len(array), len(array[0])
     return set(
         (i, j)
-        for i in (x - 1, x + 1)
-        for j in (y - 1, y + 1)
+        for i in range(x-1, x+2)
+        for j in range(y-1, y+2)
         if 0 <= i < width
         and 0 <= j < height
+        and (i==x or j==y)
+        and (x, y) != (i, j)
     )
 
 
