@@ -19,9 +19,9 @@ def matching_indexes(letter, array, visited_indexes, position):
     x, y = position
     width, height = len(array), len(array[0])
     indexes = (
+        (i, j)
         for i in (x - 1, x + 1)
         for j in (y - 1, y + 1)
-        i, j
         if letter == array[i][j]
         if 0 <= i < width
         and 0 <= j < height
