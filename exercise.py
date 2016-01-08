@@ -26,6 +26,8 @@ def is_present(word, array, position, visited_indexes=()):
     position.
     """
     assert isinstance(word, str)
+    # length of each row must be the same
+    assert len(set(len(row) for row in array)) == 1
     if word == '':
         return True
     letter = word[0]
