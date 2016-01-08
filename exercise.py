@@ -55,3 +55,28 @@ def matching_indexes(letter, array, position, visited_indexes):
     )
     return indexes
 
+
+array_A = [
+    'ABCD',
+    'EFGH',
+    'IJKL',
+    'MNOP',
+]
+
+array_B = [
+    'BOY',
+    'OH-',
+    'YOB',
+]
+
+def test_cases():
+    assert is_present_anywhere('ABCD', array_A)
+    assert not is_present_anywhere('ABCE', array_A)
+    assert is_present_anywhere('CGFEI', array_A)
+    assert not is_present_anywhere('ABA', array_A)
+    assert is_present_anywhere('BOY', array_B)
+    assert is_present_anywhere('HOBO', array_B)
+    assert not is_present_anywhere('BOHOB')
+
+if __name__ == '__main__':
+    test_cases()
