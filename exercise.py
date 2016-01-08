@@ -33,7 +33,7 @@ def is_present(word, array, position, visited_indexes=set()):
     letter = word[0]
     x, y = position
     return array[x][y] == letter and any(
-        is_present(word[:1], array, candidate, visited_indexes.union([position]))
+        is_present(word[1:], array, candidate, visited_indexes.union([position]))
         for candidate in adjacent_indices(array, position) - visited_indexes
     )
 
