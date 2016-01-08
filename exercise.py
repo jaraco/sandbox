@@ -50,9 +50,9 @@ def matching_indexes(letter, array, position, visited_indexes):
         (i, j)
         for i in (x - 1, x + 1)
         for j in (y - 1, y + 1)
-        if letter == array[i][j]
-        and 0 <= i < width
+        if 0 <= i < width
         and 0 <= j < height
+        and letter == array[i][j]
         and (i,j) not in visited_indexes
     )
     return indexes
